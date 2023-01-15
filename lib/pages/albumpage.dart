@@ -21,7 +21,6 @@ class AlbumPage extends StatefulWidget {
 
 class AlbumPageState extends State<AlbumPage> {
   static const double eachHeight = 500.0;
-  bool iseditting = false;
   TextEditingController controller = TextEditingController();
 
   @override
@@ -35,12 +34,6 @@ class AlbumPageState extends State<AlbumPage> {
               },
 
               icon: const Icon(Icons.add)),
-
-          IconButton(
-              onPressed: () {
-                onPressedEdit(context);
-              },
-              icon: const Icon(Icons.edit))
         ],
       ),
       body: buildBody(context),
@@ -48,82 +41,10 @@ class AlbumPageState extends State<AlbumPage> {
   }
 
   Widget buildBody(BuildContext context) {
-    List<Widget> children = [];
-    final state = context.read<GlobalState>();
-    if (iseditting) {
-      children = widget.data.asMap().map((key, element) =>
-      MapEntry(key, Container(
-        margin: const EdgeInsets.all(8),
-        child: Stack(
-          children: [
-            AlbumWidget(album: Album(name: element.name, path: element.path)),
-            Positioned(
-                left: 0,
-                top: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red,),
-                  onPressed: () {
-                    state.removeAt(key);
-                  },
-                )
-            ),
-            Positioned(
-                right: 0,
-                top: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.edit,),
-                  onPressed: () {
-                    controller.text = "";
-                    showDialog(context: context, builder: (context) => AlertDialog(
-                      title: const Text("编辑这个相薄"),
-                      content: TextField(
-                        controller: controller,
-                        decoration: const InputDecoration(
-                          hintText: "输入新的名称",
-                        ),
-                      ),
+    final children = widget.data.asMap().map((key, element) =>
+        MapEntry(key, buildAlbum(context, key, element))
+    ).values.toList();
 
-                      actions: [
-                        TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text("cancel")
-                        ),
-
-                        TextButton(
-                            onPressed: () {
-                              state.renameAt(key, controller.text);
-                              Navigator.of(context).pop(true);
-                            },
-                            child: const Text("confirm")
-                        )
-                      ],
-                    ));
-                  },
-                ))
-          ],
-        ),
-      ))).values.toList();
-    } else {
-      children = widget.data.asMap().map((key, element) =>
-          MapEntry(key, Container(
-              margin: const EdgeInsets.all(8),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (_) =>
-                      PhotoPage(name: element.name, imageUrls: getImages(element
-                          .path))));
-                },
-
-                onLongPress: () {
-                  onLongPress(context, key);
-                },
-                child: AlbumWidget(
-                    album: Album(name: element.name, path: element.path)),
-              )
-          ))).values.toList();
-    }
 
     return GridView(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, mainAxisExtent: eachHeight),
@@ -172,90 +93,92 @@ class AlbumPageState extends State<AlbumPage> {
     }
   }
 
-  void onPressedEdit(BuildContext context) {
-    setState(() {
-      iseditting = !iseditting;
-    });
-  }
-
-  void onLongPress(BuildContext context, int index) {
-    const position = RelativeRect.fill;
-    showMenu(
-        context: context,
-        position: position,
-        items: [
-          buildDeleteOption(context, index),
-          buildEditOption(context, index),
-        ]);
-  }
-
-  PopupMenuItem buildDeleteOption(BuildContext context, int index) {
+  Widget buildAlbum(BuildContext context, int index, Album data) {
     final state = context.read<GlobalState>();
-    return PopupMenuItem(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: const [
-          Padding(
-            padding: EdgeInsets.all(10.0),
-            child: Icon(Icons.delete, color: Colors.red,),
-          ),
+    return Container(
+        margin: const EdgeInsets.all(8),
+        child: GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (_) =>
+                PhotoPage(name: data.name, imageUrls: getImages(data.path))));
+          },
+          child: Stack(
+           children: [
+             AlbumWidget(
+                 album: Album(name: data.name, path: data.path)),
+             Positioned(
+                 right: 0,
+                 top: 0,
+                 child: PopupMenuButton(
+                   child: const Icon(Icons.more_horiz, size: 40,),
+                   itemBuilder: (context) => [
+                     PopupMenuItem(
+                       onTap: () {
+                         WidgetsBinding.instance.addPostFrameCallback((_) {
+                           onPressedEdit(context, index);
+                         });
+                       },
 
-          SizedBox(width: 15,),
+                       child: Row(
+                         crossAxisAlignment: CrossAxisAlignment.center,
+                         children: const [
+                           Icon(Icons.edit),
+                           SizedBox(width: 15,),
+                           Text("编辑")
+                         ],
+                       ),
+                     ),
 
-          Text("删除", style: TextStyle(color: Colors.black),)
-        ],
-      ),
+                     PopupMenuItem(
+                       onTap: () {
+                         state.removeAt(index);
+                       },
 
-      onTap: () {
-        state.removeAt(index);
-      },
+                       child: Row(
+                         crossAxisAlignment: CrossAxisAlignment.center,
+                         children: const [
+                           Icon(Icons.delete, color: Colors.red,),
+                           SizedBox(width: 15,),
+                           Text("删除")
+                         ],
+                       )
+                     )
+                   ],
+                 )
+             )
+           ],
+          )
+        )
     );
   }
 
-  PopupMenuItem buildEditOption(BuildContext context, int index) {
+  void onPressedEdit(BuildContext context, int index) {
+    controller.text = "";
     final state = context.read<GlobalState>();
-    return PopupMenuItem(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: const [
-          Padding(padding: EdgeInsets.all(10.0), child: Icon(Icons.edit, color: Colors.black,),),
-          SizedBox(width: 15,),
-          Text("编辑", style: TextStyle(color: Colors.black),)
-        ],
+
+    showDialog(context: context, builder: (context) => AlertDialog(
+      title: const Text("编辑这个相薄"),
+      content: TextField(
+        controller: controller,
+        decoration: const InputDecoration(
+          hintText: "输入新的相薄名称"
+        ),
       ),
 
-      onTap: () {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          controller.text = "";
-          showDialog(context: context, builder: (context) => AlertDialog(
-            title: const Text("编辑这个相薄"),
-            content: TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                hintText: "输入新的名称",
-              ),
-            ),
+      actions: [
+        TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text("cancel")),
 
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text("cancel")
-              ),
-
-              TextButton(
-                  onPressed: () {
-                    state.renameAt(index, controller.text);
-                    Navigator.of(context).pop(true);
-                  },
-                  child: const Text("confirm")
-              )
-            ],
-          ));
-        });
-      },
-
-    );
+        TextButton(
+            onPressed: () {
+              state.renameAt(index, controller.text);
+              Navigator.of(context).pop(true);
+            },
+            child: const Text("confirm"))
+      ],
+    ));
   }
 }

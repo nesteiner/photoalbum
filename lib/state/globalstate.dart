@@ -30,9 +30,11 @@ class GlobalState with ChangeNotifier {
   }
 
   Future<void> insert(Tuple2<String, String> data) async {
-    albums.add(Album(name: data.item1, path: data.item2));
     final album = Album(name: data.item1, path: data.item2);
-    await albumDao.insertOne(album);
+    final id = await albumDao.insertOne(album);
+    album.id = id;
+    albums.add(album);
+
     notifyListeners();
   }
 
@@ -40,12 +42,14 @@ class GlobalState with ChangeNotifier {
     final album = albums[index];
     albums.removeAt(index);
     await albumDao.deleteOne(album);
+    print(album.id);
     notifyListeners();
   }
 
-  void renameAt(int index, String name) {
+  Future<void> renameAt(int index, String name) async {
     // listOfNameAndPath[index] = Tuple2(name, listOfNameAndPath[index].item2);
     albums[index].name = name;
+    await albumDao.updateOne(albums[index]);
     notifyListeners();
   }
 }
