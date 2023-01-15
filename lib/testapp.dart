@@ -1,34 +1,38 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(const MyApp());
+void main() {
+  runApp(App());
+}
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
+class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Hello",
-      home: MyHomePage(),
+      home: HomePage(),
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
-  final String title = "Hello";
-  final TextEditingController controller = TextEditingController();
-
+class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
       body: Center(
-        child: Column(
-          children: [
-            TextField(controller:  controller,)
-          ],
-        ),
-      ),
+        child: buildBody(context),
+      )
     );
+  }
+
+  Widget buildBody(BuildContext context) {
+    return PopupMenuButton(itemBuilder: (context) => [
+      PopupMenuItem(
+        child: Text("click me"),
+        onTap: () {
+          showDialog(context: context, builder: (context) => AlertDialog(
+            content: Text("Hello world"),
+          ));
+        },
+      )
+    ]);
   }
 }

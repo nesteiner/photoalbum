@@ -1,109 +1,58 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:photoalbum/model/album.dart';
-import 'package:photoalbum/page/photopage.dart';
-import 'package:photoalbum/util/getimages.dart';
-import 'package:photoalbum/widget/sidebar.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:photoalbum/dao/albumdao.dart';
+import 'package:photoalbum/database.dart';
+import 'package:photoalbum/pages/albumpage.dart';
+import 'package:photoalbum/state/globalstate.dart';
+import 'package:provider/provider.dart';
 
-void main() {
-  runApp(App());
-}
+void main() => runApp(App());
 
 class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
     return MaterialApp(
-      title: "Photo Album",
-      home: HomePage(),
+      debugShowCheckedModeBanner: false,
+      home: FutureBuilder(
+        future: loadGlobalStateAsync(),
+        builder: (_, AsyncSnapshot<GlobalState> snapshot) {
+          if (snapshot.hasData) {
+            return ChangeNotifierProvider(
+              create: (_) => snapshot.requireData,
+              child: Consumer<GlobalState>(
+                builder: (context, state, child) => AlbumPage(data: state.albums),
+              ),
+            );
+          } else {
+            return LoadingPage();
+          }
+        },
+      )
+
     );
+  }
+
+  Future<AlbumDao> loadAlbumDao() async {
+    final directory = await getApplicationSupportDirectory();
+    final path = directory.path + "/photoalbum.db";
+    final database = await $FloorAppDatabase.databaseBuilder(path).build();
+    return database.albumdao;
+  }
+
+  Future<GlobalState> loadGlobalStateAsync() async {
+    final dao = await loadAlbumDao();
+    return await GlobalState.newInstanceAsync(albumDao: dao);
   }
 }
 
-class HomePage extends StatefulWidget {
-  HomePageState createState() => HomePageState();
-}
-
-class HomePageState extends State<HomePage> {
-  List<Album> albums = [];
-  Directory? currentDirectory = null;
+class LoadingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final children = albums.map((album) => SidebarItem(
-        album: album,
-        onPressed: () {
-          onPressed(Directory(album.path));
-          Navigator.of(context).pop();
-        }
-    )).toList();
-
     return Scaffold(
-      appBar: AppBar(title: Text("Photo Album")),
-      body: buildGridView(context, currentDirectory),
-      drawer: Drawer(
-        child: Column(
-          children: [
-            ListView(
-                shrinkWrap: true,
-                children: children
-            ),
-
-            SidebarAdd(
-                onAdd: (album) {
-                  setState(() {
-                    albums.add(album);
-                  });
-                })
-          ],
-        ),
+      body: Center(
+        child: const CircularProgressIndicator(),
       ),
     );
-  }
-
-  Widget buildGridView(BuildContext context, Directory? directory) {
-    if (directory == null || directory.existsSync() == false) {
-      return Container(
-
-      );
-    } else {
-      final imageUrls = getImages(directory!).map((element) =>
-      element.absolute.path).toList();
-      return GridView.builder(
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 150,
-        ),
-        itemCount: imageUrls.length,
-        itemBuilder: (context, index) => buildImage(context, imageUrls[index]),
-      );
-    }
-  }
-
-  Widget buildImage(BuildContext context, String path) {
-    final image = Image.file(
-      File(path),
-      width: 150,
-      fit: BoxFit.cover,
-    );
-
-    final container = Container(
-      margin: const EdgeInsets.all(2.0),
-      child: image,
-    );
-
-    return GestureDetector(
-      onTap: () {
-        showDialog(context: context, builder: (_) => AlertDialog(content: Image.file(File(path)),));
-      },
-
-      child: container,
-    );
-  }
-
-  void onPressed(Directory directory) {
-    setState(() {
-      currentDirectory = directory;
-    });
-
   }
 }
