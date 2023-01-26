@@ -16,14 +16,15 @@ class AlbumWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final coverWidget = album.cover == null ? Container(decoration: const BoxDecoration(color: Colors.grey), width: width, height: height,)
-        : Image.file(File(album.cover!), height: height, width: width, fit: BoxFit.cover,);
+        : Image.file(File(album.cover!), width: width, height: height, fit: BoxFit.cover,);
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          coverWidget,
-          Text(album.name, style: const TextStyle(color: Colors.black),),
-          Text(album.count.toString(), style: const TextStyle(color: Colors.grey),)
-        ],
-      );
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        coverWidget,
+        Text(album.name, style: const TextStyle(color: Colors.black),),
+        Text(album.count.toString(), style: const TextStyle(color: Colors.grey),)
+      ],
+    );
+
   }
 }

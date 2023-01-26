@@ -42,7 +42,6 @@ class GlobalState with ChangeNotifier {
     final album = albums[index];
     albums.removeAt(index);
     await albumDao.deleteOne(album);
-    print(album.id);
     notifyListeners();
   }
 

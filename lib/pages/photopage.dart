@@ -83,9 +83,13 @@ class PhotoPageState extends State<PhotoPage> {
     if (sortBy == SortBy.byName) {
       setState(() {
         widget.imageUrls.sort((a, b) {
-          final inta = int.parse(a.split("/").last.split(".").first);
-          final intb = int.parse(b.split("/").last.split(".").first);
-          return inta.compareTo(intb);
+          final inta = int.tryParse(a.split("/").last.split(".").first);
+          final intb = int.tryParse(b.split("/").last.split(".").first);
+          if (inta == null || intb == null) {
+            return a.compareTo(b);
+          } else {
+            return inta.compareTo(intb);
+          }
         });
       });
 

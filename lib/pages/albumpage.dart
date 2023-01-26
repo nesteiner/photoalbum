@@ -47,7 +47,7 @@ class AlbumPageState extends State<AlbumPage> {
 
 
     return GridView(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, mainAxisExtent: eachHeight),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 0.7),
       children: children,
     );
   }
@@ -95,7 +95,7 @@ class AlbumPageState extends State<AlbumPage> {
 
   Widget buildAlbum(BuildContext context, int index, Album data) {
     final state = context.read<GlobalState>();
-    return Container(
+    final container = Container(
         margin: const EdgeInsets.all(8),
         child: GestureDetector(
           onTap: () {
@@ -150,6 +150,8 @@ class AlbumPageState extends State<AlbumPage> {
           )
         )
     );
+
+    return container;
   }
 
   void onPressedEdit(BuildContext context, int index) {
